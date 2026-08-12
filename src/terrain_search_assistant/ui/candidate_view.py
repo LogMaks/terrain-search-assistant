@@ -78,13 +78,17 @@ def render_candidate_view(
             # artifacts live under data/artifacts; stored path is artifacts/...
             shot = config.data_dir / cand.screenshot_path
             if shot.is_file():
-                st.image(str(shot), caption="Screenshot", use_container_width=True)
+                st.image(str(shot), caption="Screenshot", width=config.preview_width_px)
             else:
                 st.caption(f"Screenshot не найден: {shot}")
             if cand.crop_path:
                 crop = config.data_dir / cand.crop_path
                 if crop.is_file():
-                    st.image(str(crop), caption="Crop", use_container_width=True)
+                    st.image(
+                        str(crop),
+                        caption="Crop",
+                        width=min(config.preview_width_px, 480),
+                    )
 
             new_status = st.selectbox(
                 "Изменить статус",

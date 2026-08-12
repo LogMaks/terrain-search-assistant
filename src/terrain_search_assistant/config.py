@@ -24,6 +24,10 @@ class AppConfig(BaseModel):
     max_srt_bytes: int = Field(default=50 * 1024 * 1024, ge=1024)
     default_visir_length_m: float = Field(default=1000.0, gt=0.0)
     overlap_warning_ratio: float = Field(default=0.1, ge=0.0, le=1.0)
+    preview_width_px: int = Field(default=1200, ge=240, le=2400)
+    yolo_weights_path: Path = Field(default=Path("models/yolov8n.pt"))
+    yolo_conf_threshold: float = Field(default=0.25, gt=0.0, le=1.0)
+    yolo_device: str = Field(default="cpu")
     fatigue: FatigueThresholds = Field(default_factory=FatigueThresholds)
 
     def ensure_dirs(self) -> None:
@@ -32,6 +36,7 @@ class AppConfig(BaseModel):
         self.artifacts_dir.mkdir(parents=True, exist_ok=True)
         (self.artifacts_dir / "screenshots").mkdir(parents=True, exist_ok=True)
         (self.artifacts_dir / "crops").mkdir(parents=True, exist_ok=True)
+        Path("models").mkdir(parents=True, exist_ok=True)
 
 
 DEFAULT_CONFIG = AppConfig()

@@ -15,6 +15,7 @@ from terrain_search_assistant.storage.repositories import (
     SessionRepository,
     VideoRepository,
 )
+from terrain_search_assistant.telemetry.track import load_bound_telemetry
 from terrain_search_assistant.ui.candidate_view import render_candidate_view
 from terrain_search_assistant.ui.map_view import render_map_view
 from terrain_search_assistant.ui.operation_view import render_operation_view
@@ -64,15 +65,17 @@ def main() -> None:
         return
 
     with tab_video:
-        video = render_video_view(operation, video_repo)
+        video = render_video_view(operation, video_repo, config)
 
     samples: list[TelemetrySample] = []
     current_sample: TelemetrySample | None = None
+    frame_index = 0
+
     with tab_review:
         if video is None:
             st.info("Импортируйте и выберите видео")
         else:
-            samples, current_sample, _frame_idx = render_review_view(
+            samples, current_sample, frame_index = render_review_view(
                 operation,
                 video,
                 session_repo,
@@ -81,8 +84,31 @@ def main() -> None:
                 config,
             )
 
+    # Map track always comes from SRT bound to the active video.
+    map_samples: list[TelemetrySample] = []
+    if video is not None:
+        map_samples, map_err = load_bound_telemetry(video, config=config)
+        if not map_samples and map_err:
+            map_samples = samples
+    else:
+        map_samples = samples
+
+    if current_sample is None and map_samples:
+        idx = min(max(frame_index, 0), len(map_samples) - 1)
+        current_sample = map_samples[idx]
+
     with tab_map:
-        render_map_view(operation, sector_repo, samples, current_sample, config)
+        if video is None:
+            st.info("Выберите видео и привяжите SRT во вкладке «Видео»")
+        else:
+            render_map_view(
+                operation,
+                sector_repo,
+                map_samples,
+                current_sample,
+                config,
+                video_label=video.filename,
+            )
 
     with tab_cand:
         render_candidate_view(operation, candidate_repo, config)

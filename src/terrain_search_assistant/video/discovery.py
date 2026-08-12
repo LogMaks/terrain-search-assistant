@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv"}
+SRT_EXTENSIONS = {".srt"}
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,34 @@ def compute_fingerprint(path: Path, *, head_bytes: int = 1024 * 1024) -> str:
     return digest.hexdigest()
 
 
+def find_matching_srt(video: Path) -> Path | None:
+    """Find sibling SRT for a video (case-insensitive stem match)."""
+    parent = video.parent
+    stem_lower = video.stem.lower()
+    try:
+        entries = [p for p in parent.iterdir() if p.is_file()]
+    except OSError:
+        return None
+
+    exact: list[Path] = []
+    prefixed: list[Path] = []
+    for path in entries:
+        if path.suffix.lower() not in SRT_EXTENSIONS:
+            continue
+        name_stem = path.stem.lower()
+        if name_stem == stem_lower:
+            exact.append(path)
+        elif name_stem.startswith(stem_lower):
+            prefixed.append(path)
+
+    if exact:
+        # Prefer exact stem; stable order for determinism.
+        return sorted(exact, key=lambda p: p.name.lower())[0]
+    if len(prefixed) == 1:
+        return prefixed[0]
+    return None
+
+
 def discover_videos(directory: Path, *, recursive: bool = False) -> list[DiscoveredVideo]:
     """Find video files and optionally pair sibling .SRT/.srt by stem."""
     directory = Path(directory)
@@ -46,16 +75,10 @@ def discover_videos(directory: Path, *, recursive: bool = False) -> list[Discove
 
     results: list[DiscoveredVideo] = []
     for video in sorted(videos, key=lambda p: p.name.lower()):
-        srt: Path | None = None
-        for ext in (".SRT", ".srt"):
-            candidate = video.with_suffix(ext)
-            if candidate.is_file():
-                srt = candidate
-                break
         results.append(
             DiscoveredVideo(
                 path=video,
-                srt_path=srt,
+                srt_path=find_matching_srt(video),
                 filesize=video.stat().st_size,
                 fingerprint=compute_fingerprint(video),
             )

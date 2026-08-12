@@ -23,6 +23,9 @@ dev = [
     "mypy>=1.13.0",
     "types-Pillow>=10.0.0",
 ]
+yolo = [
+    "ultralytics>=8.3.0",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -66,6 +69,8 @@ module = [
     "streamlit_folium.*",
     "streamlit.*",
     "shapely.*",
+    "ultralytics",
+    "ultralytics.*",
 ]
 ignore_missing_imports = true
 

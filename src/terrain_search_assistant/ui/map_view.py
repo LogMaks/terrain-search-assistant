@@ -42,12 +42,24 @@ def render_map_view(
     samples: list[TelemetrySample],
     current_sample: TelemetrySample | None,
     config: AppConfig,
+    *,
+    video_label: str | None = None,
 ) -> None:
     st.subheader("Карта")
     st.caption(
         "Ориентировочный визир.\n"
         "Пересечение с рельефом ещё не рассчитано."
     )
+    if video_label:
+        gps_n = sum(
+            1 for s in samples if s.latitude is not None and s.longitude is not None
+        )
+        st.caption(f"Видео: **{video_label}** · точек GPS в треке: {gps_n}")
+    if not samples:
+        st.caption(
+            "Трек не показан: у активного видео нет SRT (это нормально). "
+            "Секторы и карта по-прежнему доступны."
+        )
 
     sectors = sector_repo.list_for_operation(operation.id)
     center = _default_center(samples, sectors)
