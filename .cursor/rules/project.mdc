@@ -1,0 +1,25 @@
+---
+description: Terrain Search Assistant project rules
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Terrain Search Assistant — engineering rules
+
+- Keep business logic out of Streamlit UI modules (`ui/`); views orchestrate only.
+- Type all public functions; prefer explicit `None` over fabricated zeros/coordinates.
+- Cover geodesic / geometry calculations with unit tests.
+- Do not hardcode absolute paths, operational coordinates, or UTM zones.
+- `relative_altitude` is NOT height above terrain (DEM AGL).
+- Never present drone GPS as the found object's coordinates.
+- Do not claim precise coverage / footprint without a DEM backend.
+- Never conclude «людей нет» or that an area is safe.
+- Do not delete doubtful candidates; status history must be retained.
+- Do not wire ML without a `Detector` adapter; this iteration uses `NullDetector` only.
+- Do not assume GPU availability.
+- Do not send video/telemetry/artifacts to external services.
+- Never use `subprocess` with `shell=True`.
+- Do not swallow exceptions with bare `except:` / empty handlers.
+- Do not add dependencies without a concrete need in the current iteration.
+- Avoid large unrelated refactors without justification.
